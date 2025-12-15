@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoginActivity">
+    <TextView
+        android:id="@+id/text_view_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AKILLI KAMPÜS GİRİŞ"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <EditText
+        android:id="@+id/edit_text_email"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="E-posta Adresi"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@id/text_view_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9" />
+
+    <EditText
+        android:id="@+id/edit_text_password"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:hint="Şifre"
+        android:inputType="textPassword"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/edit_text_email"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9" />
+
+    <TextView
+        android:id="@+id/text_view_error"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Hata: E-posta veya şifre hatalı."
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:visibility="gone" android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/edit_text_password"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9" />
+
+    <Button
+        android:id="@+id/button_login"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="GİRİŞ YAP"
+        android:padding="12dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/text_view_error"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9" />
+
+    <TextView
+        android:id="@+id/text_view_forgot_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Şifremi Sıfırla"
+        android:textColor="@color/design_default_color_primary"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/button_login"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/text_view_register"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hesabın yok mu? Kayıt Ol"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
