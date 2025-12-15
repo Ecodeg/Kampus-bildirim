@@ -1,6 +1,10 @@
 plugins {
-    alias(libs.plugins.android.application)
+
+    // Google Services plugin (here apply)
+    id("com.google.gms.google-services")
+
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.android.application)
 }
 
 android {
@@ -46,4 +50,19 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Firebase BoM (versiyon yönetimini kolaylaştırır)
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth")
+
+    // Cloud Firestore
+    implementation("com.google.firebase:firebase-firestore")
+
+    // Storage (fotoğraf yükleme)
+    implementation("com.google.firebase:firebase-storage")
+
+    // Messaging (bildirimler)
+    implementation("com.google.firebase:firebase-messaging")
 }

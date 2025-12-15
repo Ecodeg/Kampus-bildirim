@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "387196500966",
+    "project_id": "kampus-bildirimi",
+    "storage_bucket": "kampus-bildirimi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:387196500966:android:8164238ac51f61ee893427",
+        "android_client_info": {
+          "package_name": "com.example.deneme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjeyH-E8cMJrdSXM9h2Yulmx_ex6kZYLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:387196500966:android:2b63a6b279c283b8893427",
+        "android_client_info": {
+          "package_name": "com.example.kampus_bildirim"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjeyH-E8cMJrdSXM9h2Yulmx_ex6kZYLo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
