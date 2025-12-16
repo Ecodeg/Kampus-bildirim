@@ -1,25 +1,24 @@
 package com.example.kampus_bildirim
 
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 data class Notification(
-    // her belgenin idsi var,silme/güncelleme için
     val id: String? = null,
-
-    // Tür
-    val type: String = "",
-
-    // Başlık
+    val userId: String? = null, // Bildirimi oluşturan kullanıcının ID'si
+    val type: String = "", // Tür (Sağlık, Güvenlik, Çevre vb.)
     val title: String = "",
-
-    // Açıklama
     val description: String = "",
-
-    // Durum (Varsayılan olarak açık)
     val status: String = "Açık",
-
-    //  Oluşturulma Zamanı (Long kolaylık)
-    val timestamp: Long = System.currentTimeMillis(),
 
     // Harita için konum
     val latitude: Double = 0.0,
-    val longitude: Double = 0.0
+    val longitude: Double = 0.0,
+
+    // Fotoğraf ekleme
+    val photoUrl: String? = null,
+
+    // Oluşturulma Zamanı
+    @ServerTimestamp
+    val creationTime: Date? = null
 )

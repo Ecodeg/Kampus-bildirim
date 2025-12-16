@@ -44,9 +44,14 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
         holder.description.text = notification.description
         holder.status.text = notification.status
 
-        // Zamanı çevirme
+        // Zamanı formatla (HH:mm -> Saat:Dakika)
         val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        holder.timestamp.text = sdf.format(Date(notification.timestamp))
+
+        notification.creationTime?.let {
+            holder.timestamp.text = sdf.format(it)
+        } ?: run {
+            holder.timestamp.text = "--:--" // Eğer zaman boşsa (null)
+        }
 
         //  ikon rengi veya ikon değiştirme türe göre
         when (notification.status) {
