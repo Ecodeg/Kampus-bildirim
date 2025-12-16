@@ -11,8 +11,14 @@ import java.util.Date
 import java.util.Locale
 
 // Adapter bildirim listesini girdi olarak alacak
-class NotificationAdapter(private val notificationList: List<Notification>) :
+// var kullandım updateList ile güncellemek için
+class NotificationAdapter(private var notificationList: List<Notification>) :
     RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder>() {
+
+    fun updateList(newList: List<Notification>) {
+        notificationList = newList
+        notifyDataSetChanged()
+    }
 
     // bileşenleri(xml) koda bağla
     class NotificationViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -45,6 +51,7 @@ class NotificationAdapter(private val notificationList: List<Notification>) :
         //  ikon rengi veya ikon değiştirme türe göre
         when (notification.status) {
             "Açık" -> holder.status.setBackgroundResource(android.R.color.holo_red_light)
+            "İnceleniyor"-> holder.status.setBackgroundResource(android.R.color.holo_orange_light)
             "Çözüldü" -> holder.status.setBackgroundResource(android.R.color.holo_green_light)
         }
     }

@@ -1,6 +1,7 @@
 package com.example.kampus_bildirim
 
 import android.os.Bundle
+import android.text.Editable
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -42,6 +43,39 @@ class MainActivity : AppCompatActivity() {
 
         //  Veri Çekme
         fetchNotifications()
+        // arama çubuğu
+        val etSearch = findViewById<android.widget.EditText>(R.id.etSearch)
+
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterList(s.toString()) // Her harf değiştiğinde listeyi filtrele
+            }
+            override fun afterTextChanged(s: Editable) {}
+
+        })
+        findViewById<android.widget.Button>(R.id.btnAll).setOnClickListener { filterByType("Hepsi") }
+        findViewById<android.widget.Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
+        findViewById<android.widget.Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
+    }
+
+    private fun filterList(query: String) {
+        val filteredList = arrayListOf<Notification>()
+        for (item in notificationList) {
+            if (item.title.lowercase().contains(query.lowercase()) ||
+                item.description.lowercase().contains(query.lowercase())) {
+                filteredList.add(item)
+            }
+        }
+        adapter.updateList(filteredList)
+    }
+    private fun filterByType(type: String) {
+        if (type == "Hepsi") {
+            adapter.updateList(notificationList)
+        } else {
+            val filteredList = notificationList.filter { it.type == type }
+            adapter.updateList(filteredList)
+        }
     }
 
     private fun fetchNotifications() {
