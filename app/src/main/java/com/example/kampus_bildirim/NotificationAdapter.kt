@@ -1,5 +1,6 @@
 package com.example.kampus_bildirim
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -53,11 +54,19 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
             holder.timestamp.text = "--:--" // Eğer zaman boşsa (null)
         }
 
-        //  ikon rengi veya ikon değiştirme türe göre
+        // durum renkleri
         when (notification.status) {
-            "Açık" -> holder.status.setBackgroundResource(android.R.color.holo_red_light)
-            "İnceleniyor"-> holder.status.setBackgroundResource(android.R.color.holo_orange_light)
-            "Çözüldü" -> holder.status.setBackgroundResource(android.R.color.holo_green_light)
+            "Açık" -> holder.status.setTextColor(Color.RED)
+            "İnceleniyor" -> holder.status.setTextColor(Color.BLUE)
+            "Çözüldü" -> holder.status.setTextColor(Color.GREEN)
+            else -> holder.status.setTextColor(Color.GRAY)
+        }
+        // tür renkleri
+        when (notification.type) {
+            "Sağlık" -> holder.icon.setImageResource(android.R.drawable.ic_menu_mylocation) // Buraya kendi ikonlarını koyabilirsin
+            "Güvenlik" -> holder.icon.setImageResource(android.R.drawable.ic_lock_lock)
+            "Çevre" -> holder.icon.setImageResource(android.R.drawable.ic_menu_compass)
+            else -> holder.icon.setImageResource(android.R.drawable.ic_dialog_info)
         }
     }
 

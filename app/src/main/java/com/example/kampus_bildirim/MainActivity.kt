@@ -1,7 +1,11 @@
 package com.example.kampus_bildirim
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
+import android.text.TextWatcher
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -9,12 +13,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
 class MainActivity : AppCompatActivity() {
 
-    //  değişken tanımlama
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: NotificationAdapter
     private lateinit var notificationList: ArrayList<Notification>
@@ -22,17 +26,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge() // Kenardan kenara görünüm
+        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // üst bar boşlukları
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Firebase ve Liste Yapısını Başlatma
         db = FirebaseFirestore.getInstance()
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -41,22 +43,41 @@ class MainActivity : AppCompatActivity() {
         adapter = NotificationAdapter(notificationList)
         recyclerView.adapter = adapter
 
-        //  Veri Çekme
         fetchNotifications()
-        // arama çubuğu
-        val etSearch = findViewById<android.widget.EditText>(R.id.etSearch)
 
-        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+        // arama çubuğu
+        val etSearch = findViewById<EditText>(R.id.etSearch)
+        etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filterList(s.toString()) // Her harf değiştiğinde listeyi filtrele
+                filterList(s.toString())
             }
-            override fun afterTextChanged(s: Editable) {}
-
+            override fun afterTextChanged(s: Editable?) {}
         })
-        findViewById<android.widget.Button>(R.id.btnAll).setOnClickListener { filterByType("Hepsi") }
-        findViewById<android.widget.Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
-        findViewById<android.widget.Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
+
+        // filtreleme
+        findViewById<Button>(R.id.btnAll).setOnClickListener { adapter.updateList(notificationList) }
+        findViewById<Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
+        findViewById<Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
+
+        //  Sadece "Açık" olanlar
+        findViewById<Button>(R.id.btnOpenOnly).setOnClickListener {
+            val filtered = notificationList.filter { it.status == "Açık" }
+            adapter.updateList(filtered)
+        }
+
+        //  Takip Ettiklerim
+        findViewById<Button>(R.id.btnFollowed).setOnClickListener {
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+            val filtered = notificationList.filter { it.userId == currentUserId }
+            adapter.updateList(filtered)
+        }
+
+        //  Admin Yetki Alanı
+        findViewById<Button>(R.id.btnAdminOnly).setOnClickListener {
+            filterByType("Teknik") // Adminin türü neyse o filtreyi uygular
+        }
+
     }
 
     private fun filterList(query: String) {
@@ -69,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
         adapter.updateList(filteredList)
     }
+
     private fun filterByType(type: String) {
         if (type == "Hepsi") {
             adapter.updateList(notificationList)
@@ -77,32 +99,32 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filteredList)
         }
     }
-
     private fun fetchNotifications() {
         db.collection("notifications")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .orderBy("creationTime", Query.Direction.DESCENDING)
             .addSnapshotListener { value, error ->
-
                 if (error != null) {
-                    Toast.makeText(this, "Veri çekilemedi: ${error.message}", Toast.LENGTH_SHORT).show()
+                    // HATA VARSA BURASI ÇALIŞIR
+                    android.util.Log.e("FirestoreVeri", "HATA ALINDI: ${error.message}")
                     return@addSnapshotListener
                 }
 
                 if (value != null) {
-                    notificationList.clear() // Listeyi temizle
+                    // VERİ GELDİYSE BURASI ÇALIŞIR
+                    android.util.Log.d("FirestoreVeri", "Firebase'den ${value.size()} adet döküman geldi.")
 
+                    notificationList.clear()
                     for (doc in value.documents) {
-                        // Gelen veriyi çevir
-                        val notification = doc.toObject(Notification::class.java)
+                        // Her bir dökümanın ID'sini yazdıralım
+                        android.util.Log.d("FirestoreVeri", "Gelen Döküman ID: ${doc.id}")
 
-                        // Eğer notification boş değilse içeri gir
+                        val notification = doc.toObject(Notification::class.java)
                         notification?.let {
-                            // Belge ıdsiyle listeye ekle
-                            val notificationWithId = it.copy(id = doc.id)
-                            notificationList.add(notificationWithId)
+                            notificationList.add(it.copy(id = doc.id))
+                        }
                     }
-                    adapter.notifyDataSetChanged() // ekranı yenile
+                    adapter.updateList(notificationList)
                 }
             }
     }
-}}
+}
