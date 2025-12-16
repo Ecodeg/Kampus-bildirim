@@ -45,10 +45,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchNotifications() {
-        // notifications a git  ve zamana göre sırala
         db.collection("notifications")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { value, error ->
+
                 if (error != null) {
                     Toast.makeText(this, "Veri çekilemedi: ${error.message}", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
@@ -56,15 +56,19 @@ class MainActivity : AppCompatActivity() {
 
                 if (value != null) {
                     notificationList.clear() // Listeyi temizle
+
                     for (doc in value.documents) {
                         // Gelen veriyi çevir
                         val notification = doc.toObject(Notification::class.java)
-                        if (notification != null) {
-                            notificationList.add(notification)
-                        }
+
+                        // Eğer notification boş değilse içeri gir
+                        notification?.let {
+                            // Belge ıdsiyle listeye ekle
+                            val notificationWithId = it.copy(id = doc.id)
+                            notificationList.add(notificationWithId)
                     }
                     adapter.notifyDataSetChanged() // ekranı yenile
                 }
             }
     }
-}
+}}
