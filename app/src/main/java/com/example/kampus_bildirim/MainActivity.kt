@@ -45,6 +45,13 @@ class MainActivity : AppCompatActivity() {
 
         fetchNotifications()
 
+        // Harita butonu
+        val btnOpenMap = findViewById<android.widget.ImageButton>(R.id.btnOpenMap)
+        btnOpenMap.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            startActivity(intent)
+        }
+
         // arama çubuğu
         val etSearch = findViewById<EditText>(R.id.etSearch)
         etSearch.addTextChangedListener(object : TextWatcher {

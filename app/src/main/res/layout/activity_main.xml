@@ -19,13 +19,33 @@
         android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Kampüs Akışı"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"/>
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/textViewTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kampüs Akışı"
+                android:textColor="@android:color/black"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnOpenMap"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Haritayı Aç"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_dialog_map"
+                app:tint="#1976D2" />
+        </RelativeLayout>
 
         <EditText
             android:id="@+id/etSearch"
@@ -48,53 +68,12 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <Button
-                    android:id="@+id/btnAll"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Hepsi" />
-
-                <Button
-                    android:id="@+id/btnHealth"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Sağlık" />
-
-                <Button
-                    android:id="@+id/btnSecurity"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Güvenlik" />
-
-                <Button
-                    android:id="@+id/btnOpenOnly"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Sadece Açık" />
-
-                <Button
-                    android:id="@+id/btnFollowed"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Takip Ettiklerim" />
-
-                <Button
-                    android:id="@+id/btnAdminOnly"
-                    style="?android:attr/buttonStyleSmall"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Yetki Alanım" />
-
+                <Button android:id="@+id/btnAll" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Hepsi" />
+                <Button android:id="@+id/btnHealth" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Sağlık" />
+                <Button android:id="@+id/btnSecurity" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Güvenlik" />
+                <Button android:id="@+id/btnOpenOnly" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Sadece Açık" />
+                <Button android:id="@+id/btnFollowed" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Takip Ettiklerim" />
+                <Button android:id="@+id/btnAdminOnly" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Yetki Alanım" />
             </LinearLayout>
         </HorizontalScrollView>
     </LinearLayout>
