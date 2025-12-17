@@ -5,7 +5,6 @@ plugins {
 
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.google.android.libraries.mapsplatform.secrets.gradle.plugin)
 }
 
 android {
