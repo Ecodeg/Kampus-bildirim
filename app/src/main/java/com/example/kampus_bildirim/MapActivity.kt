@@ -1,5 +1,6 @@
 package com.example.kampus_bildirim
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -13,6 +14,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.concurrent.TimeUnit
+import com.google.firebase.Timestamp
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -58,11 +60,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 val notif = doc.toObject(Notification::class.java)
                 notif?.let {
                     val pos = LatLng(it.latitude, it.longitude)
+
+                    // Bildirimlere göre renk belirleme
                     val markerColor = when (it.type) {
-                        "Sağlık" -> BitmapDescriptorFactory.HUE_RED
-                        "Güvenlik" -> BitmapDescriptorFactory.HUE_BLUE
-                        "Teknik" -> BitmapDescriptorFactory.HUE_YELLOW
-                        else -> BitmapDescriptorFactory.HUE_GREEN
+                        "Sağlık" -> BitmapDescriptorFactory.HUE_RED        // Kırmızı
+                        "Güvenlik" -> BitmapDescriptorFactory.HUE_BLUE     // Mavi
+                        "Teknik" -> BitmapDescriptorFactory.HUE_ORANGE     // Turuncu
+                        "Çevre" -> BitmapDescriptorFactory.HUE_GREEN       // Yeşil
+                        else -> BitmapDescriptorFactory.HUE_CYAN           // Diğerleri Turkuaz
                     }
 
                     val marker = mMap.addMarker(MarkerOptions()
@@ -70,25 +75,56 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         .title(it.title)
                         .icon(BitmapDescriptorFactory.defaultMarker(markerColor)))
 
-                    marker?.tag = it // Notification nesnesini marker'a bağla
+                    marker?.tag = it // Notification'ı bağla (Detay için lazım)
                 }
             }
         }
     }
 
     private fun showInfoCard(notif: Notification) {
-        findViewById<TextView>(R.id.tvMapTitle).text = notif.title
-        findViewById<TextView>(R.id.tvMapType).text = "Tür: ${notif.type}"
+        val tvTitle = findViewById<TextView>(R.id.tvMapTitle)
+        val tvType = findViewById<TextView>(R.id.tvMapType)
+        val tvTime = findViewById<TextView>(R.id.tvMapTime)
+        val btnGoDetail = findViewById<Button>(R.id.btnGoDetail)
 
-        // Zamanı hesapla
-        val diff = System.currentTimeMillis() - (notif.creationTime?.time ?: System.currentTimeMillis())
-        val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
-        findViewById<TextView>(R.id.tvMapTime).text = "$minutes dakika önce oluşturuldu"
+        // Bilgileri karta yazıyoruz
+        tvTitle.text = notif.title
+        tvType.text = "Tür: ${notif.type}"
+
+        // Bildirim ne kadar süre önce oluşturuldu hesaplıyoruz
+        val timeAgo = try {
+            notif.creationTime?.let {
+                val diff = System.currentTimeMillis() - it.toDate().time
+                val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(diff)
+                val hours = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff)
+
+                when {
+                    minutes < 1 -> "Şimdi"
+                    minutes < 60 -> "$minutes dk önce"
+                    hours < 24 -> "$hours sa önce"
+                    else -> "${hours / 24} gün önce"
+                }
+            } ?: "Zaman bilgisi yok"
+        } catch (e: Exception) {
+            "Zaman hesaplanamadı"
+        }
+
+        tvTime.text = timeAgo
+
 
         infoCard.visibility = View.VISIBLE
 
-        findViewById<Button>(R.id.btnGoDetail).setOnClickListener {
-            // Detay sayfasına geçiş
+        // Detay gör
+        btnGoDetail.setOnClickListener {
+            val intent = Intent(this, NotificationDetailActivity::class.java)
+            // Tüm bilgileri (ID dahil) detay sayfasına gönderiyoruz
+            intent.putExtra("notif_id", notif.id)
+            intent.putExtra("notif_title", notif.title)
+            intent.putExtra("notif_desc", notif.description)
+            intent.putExtra("notif_type", notif.type)
+            intent.putExtra("notif_status", notif.status)
+            intent.putExtra("notif_time", timeAgo)
+            startActivity(intent)
         }
     }
 }

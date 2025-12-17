@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvDetayBaslik"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:text="Başlık" />
+
+    <TextView
+        android:id="@+id/tvDetayTur"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="#1976D2"
+        android:text="Tür: Sağlık" />
+
+    <TextView
+        android:id="@+id/tvDetayZaman"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="#757575"
+        android:textSize="14sp"
+        android:text="Zaman bilgisi yükleniyor..." />
+
+    <TextView
+        android:id="@+id/tvDetayAciklama"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textSize="16sp"
+        android:text="Olayın açıklaması burada yer alacak." />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="20dp"
+        android:background="#DDDDDD" />
+
+    <TextView
+        android:id="@+id/tvDetayDurum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:background="#4CAF50"
+        android:textColor="@android:color/white"
+        android:text="DURUM: AÇIK" />
+
+    <Button
+        android:id="@+id/btnUpdateStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:visibility="gone"
+        android:backgroundTint="#FF9800"
+        android:text="Durumu Güncelle (Admin)" />
+
+</LinearLayout>

@@ -20,5 +20,5 @@ data class Notification(
 
     // Oluşturulma Zamanı
     @ServerTimestamp
-    val creationTime: Date? = null
+    val creationTime: com.google.firebase.Timestamp? = null
 )

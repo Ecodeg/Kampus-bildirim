@@ -45,13 +45,15 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
         holder.description.text = notification.description
         holder.status.text = notification.status
 
-        // Zamanı formatla (HH:mm -> Saat:Dakika)
+        // Zamanı formatla
         val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
 
-        notification.creationTime?.let {
-            holder.timestamp.text = sdf.format(it)
+        notification.creationTime?.let { timestamp ->
+            // Timestamp'i Date'e çeviriyoruz
+            val date = timestamp.toDate()
+            holder.timestamp.text = sdf.format(date)
         } ?: run {
-            holder.timestamp.text = "--:--" // Eğer zaman boşsa (null)
+            holder.timestamp.text = "--:--"
         }
 
         // durum renkleri
