@@ -34,9 +34,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // Kampüs merkezine odaklan (Örnek koordinat)
-        val kampusMerkez = LatLng(39.9208, 32.8541)
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(kampusMerkez, 15f))
+        // Erzurum Koordinatları (Kampüs Civarı)
+        val erzurumKampus = LatLng(39.9048, 41.2678)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(erzurumKampus, 14f))
 
         fetchNotificationsForMap()
 
@@ -80,7 +80,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<TextView>(R.id.tvMapTitle).text = notif.title
         findViewById<TextView>(R.id.tvMapType).text = "Tür: ${notif.type}"
 
-        // Zamanı hesapla (Hoca ne kadar önce olduğunu istedi)
+        // Zamanı hesapla
         val diff = System.currentTimeMillis() - (notif.creationTime?.time ?: System.currentTimeMillis())
         val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
         findViewById<TextView>(R.id.tvMapTime).text = "$minutes dakika önce oluşturuldu"
@@ -88,7 +88,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         infoCard.visibility = View.VISIBLE
 
         findViewById<Button>(R.id.btnGoDetail).setOnClickListener {
-            // Buradan Detay sayfasına geçiş yapılacak
+            // Detay sayfasına geçiş
         }
     }
 }
