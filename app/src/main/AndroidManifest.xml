@@ -21,7 +21,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="Api key almalıyız (buraya bidaha bak)" />
+            android:value="AIzaSyBGO4iSnRjCum_MFRJp42yQFgEsR3dhWgg" />
 
         <activity
             android:name=".LoginActivity"
