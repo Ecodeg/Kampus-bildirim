@@ -20,7 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var db: FirebaseFirestore
-    
+    private lateinit var auth: FirebaseAuth
     private var notificationId: String? = null
     //yeni eklenen bileşenler
     private lateinit var mMap: GoogleMap
@@ -32,6 +32,7 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_notification_detail)
 
         db = FirebaseFirestore.getInstance()
+        auth = FirebaseAuth.getInstance()
 
         // Verileri al
         notificationId = intent.getStringExtra("notif_id")
