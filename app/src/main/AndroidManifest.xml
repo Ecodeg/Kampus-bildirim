@@ -16,6 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Kampusbildirim">
         <activity
+            android:name=".AddNotificationActivity"
+            android:exported="false" />
+        <activity
             android:name=".NotificationDetailActivity"
             android:exported="false" />
         <activity

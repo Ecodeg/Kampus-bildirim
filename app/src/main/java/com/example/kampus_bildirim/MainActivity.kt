@@ -52,6 +52,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddNotification).setOnClickListener {
+            val intent = Intent(this, AddNotificationActivity::class.java)
+            startActivity(intent)
+        }
+
         // arama çubuğu
         val etSearch = findViewById<EditText>(R.id.etSearch)
         etSearch.addTextChangedListener(object : TextWatcher {
