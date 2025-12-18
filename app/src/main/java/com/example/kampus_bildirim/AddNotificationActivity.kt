@@ -10,12 +10,15 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.net.Uri
+import android.view.View
 
 class AddNotificationActivity : AppCompatActivity() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
+    private var selectedImageUri: Uri? = null // Resmin yolu
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,11 +31,27 @@ class AddNotificationActivity : AppCompatActivity() {
         val tvLocStatus = findViewById<TextView>(R.id.tvLocationStatus)
         val btnSave = findViewById<Button>(R.id.btnSaveNotification)
 
+
+        val ivPreview = findViewById<ImageView>(R.id.ivPreview)
+        val btnSelectPhoto = findViewById<Button>(R.id.btnSelectPhoto)
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Spinner'a türleri ekle
-        val types = arrayOf("Sağlık", "Güvenlik", "Teknik", "Çevre","Diğer")
+        val types = arrayOf("Sağlık", "Güvenlik", "Teknik", "Çevre", "Diğer")
         spinnerType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
+
+        val pickImage = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri != null) {
+                selectedImageUri = uri
+                ivPreview.setImageURI(uri) // Resmi ekranda göster
+                ivPreview.visibility = View.VISIBLE // ImageView'ı görünür yap
+            }
+        }
+
+        btnSelectPhoto.setOnClickListener {
+            pickImage.launch("image/*") // Galeriyi açar
+        }
 
         // Konum butonu
         btnGetLoc.setOnClickListener {
@@ -46,8 +65,17 @@ class AddNotificationActivity : AppCompatActivity() {
             val type = spinnerType.selectedItem.toString()
             val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-            if (title.isEmpty() || desc.isEmpty() || latitude == 0.0) {
-                Toast.makeText(this, "Lütfen tüm alanları doldurun ve konum alın!", Toast.LENGTH_SHORT).show()
+            // Form Doğrulaması
+            if (title.isEmpty()) {
+                etTitle.error = "Başlık boş olamaz"
+                return@setOnClickListener
+            }
+            if (desc.isEmpty()) {
+                etDesc.error = "Açıklama boş olamaz"
+                return@setOnClickListener
+            }
+            if (latitude == 0.0) {
+                Toast.makeText(this, "Lütfen konum alın!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -59,7 +87,8 @@ class AddNotificationActivity : AppCompatActivity() {
                 description = desc,
                 latitude = latitude,
                 longitude = longitude,
-                status = "Açık"
+                status = "Açık",
+                photoUrl = selectedImageUri?.toString()
             )
 
             saveToFirestore(newNotification)
