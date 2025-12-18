@@ -74,12 +74,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         //  Takip Ettiklerim
+
         findViewById<Button>(R.id.btnFollowed).setOnClickListener {
             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-            val filtered = notificationList.filter { it.userId == currentUserId }
+            // Bildirimi oluşturan değil, takipçiler listesinde olanları filtrele
+            val filtered = notificationList.filter { it.followers.contains(currentUserId) }
             adapter.updateList(filtered)
         }
-
         //  Admin Yetki Alanı
         findViewById<Button>(R.id.btnAdminOnly).setOnClickListener {
             filterByType("Teknik") // Adminin türü neyse o filtreyi uygular
@@ -111,13 +112,13 @@ class MainActivity : AppCompatActivity() {
             .orderBy("creationTime", Query.Direction.DESCENDING)
             .addSnapshotListener { value, error ->
                 if (error != null) {
-                    // HATA VARSA BURASI ÇALIŞIR
+                    // hata varsa çalışacak
                     android.util.Log.e("FirestoreVeri", "HATA ALINDI: ${error.message}")
                     return@addSnapshotListener
                 }
 
                 if (value != null) {
-                    // VERİ GELDİYSE BURASI ÇALIŞIR
+                    // veri gelirse burası
                     android.util.Log.d("FirestoreVeri", "Firebase'den ${value.size()} adet döküman geldi.")
 
                     notificationList.clear()

@@ -10,6 +10,7 @@ data class Notification(
     val title: String = "",
     val description: String = "",
     val status: String = "Açık",
+    val followers: List<String> = listOf(),
 
     // Harita için konum
     val latitude: Double = 0.0,

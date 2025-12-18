@@ -1,6 +1,7 @@
 package com.example.kampus_bildirim
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -34,6 +35,9 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
+        //  butonu xml ıdsine göre bağla 
+        btnFollow = findViewById(R.id.btnFollow)
+
         // Verileri al
         notificationId = intent.getStringExtra("notif_id")
         val title = intent.getStringExtra("notif_title")
@@ -41,6 +45,7 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         val type = intent.getStringExtra("notif_type")
         val status = intent.getStringExtra("notif_status")
         val time = intent.getStringExtra("notif_time")
+
 
         // Ekrana verileri yaz
         findViewById<TextView>(R.id.tvDetayBaslik).text = title
@@ -62,6 +67,9 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         // Admin butonuna tıklama işlemi
         findViewById<Button>(R.id.btnUpdateStatus).setOnClickListener {
             updateStatus()
+        }
+        btnFollow.setOnClickListener {
+            toggleFollow()
         }
     }
 
@@ -98,8 +106,8 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         val currentUserId = auth.currentUser?.uid ?: return
         notificationId?.let { id ->
             db.collection("notifications").document(id).get().addOnSuccessListener { doc ->
-                val followers = doc.get("followers") as? List<String>
-                if (followers != null && followers.contains(currentUserId)) {
+                val followersList = doc.get("followers") as? List<String> ?: listOf()
+                if (followersList.contains(currentUserId)) {
                     isFollowing = true
                     btnFollow.text = "Takibi Bırak"
                 } else {
@@ -120,6 +128,8 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 isFollowing = true
                 btnFollow.text = "Takibi Bırak"
                 Toast.makeText(this, "Takip listesine eklendi", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { e ->
+                Log.e("HATA", "Takip hatası: ${e.message}")
             }
         } else {
             // Takip çıkar
