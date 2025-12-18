@@ -52,6 +52,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddNotification).setOnClickListener {
+            val intent = Intent(this, AddNotificationActivity::class.java)
+            startActivity(intent)
+        }
+
         // arama çubuğu
         val etSearch = findViewById<EditText>(R.id.etSearch)
         etSearch.addTextChangedListener(object : TextWatcher {
@@ -111,13 +116,13 @@ class MainActivity : AppCompatActivity() {
             .orderBy("creationTime", Query.Direction.DESCENDING)
             .addSnapshotListener { value, error ->
                 if (error != null) {
-                    // HATA VARSA BURASI ÇALIŞIR
+                    // Hata varsa
                     android.util.Log.e("FirestoreVeri", "HATA ALINDI: ${error.message}")
                     return@addSnapshotListener
                 }
 
                 if (value != null) {
-                    // VERİ GELDİYSE BURASI ÇALIŞIR
+                    // Veri geldiyse
                     android.util.Log.d("FirestoreVeri", "Firebase'den ${value.size()} adet döküman geldi.")
 
                     notificationList.clear()
