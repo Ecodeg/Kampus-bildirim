@@ -6,13 +6,25 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+// Harita kütüphaneleri
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
-class NotificationDetailActivity : AppCompatActivity() {
+class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var db: FirebaseFirestore
     private var notificationId: String? = null
+    //yeni eklenen bileşenler
+    private lateinit var mMap: GoogleMap
+    private lateinit var btnFollow: Button // Yeni buton
+    private var isFollowing = false // Takip durumu kontrolü
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,13 +47,37 @@ class NotificationDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvDetayDurum).text = "Durum: $status"
         findViewById<TextView>(R.id.tvDetayZaman).text = time // Zaman bilgisini buraya yazdık
 
+        // Mini Haritayı Başlat
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.mini_map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+
         // Eğer giriş yapan admin ise butonu göster
         checkUserRole()
+
+        // Mevcut takip durumunu kontrol et
+        checkFollowStatus()
 
         // Admin butonuna tıklama işlemi
         findViewById<Button>(R.id.btnUpdateStatus).setOnClickListener {
             updateStatus()
         }
+    }
+
+    // Harita Hazır Olduğunda Çalışır
+    override fun onMapReady(googleMap: GoogleMap) {
+        mMap = googleMap
+
+        // gelen konum bilgilerini al boşsa kampüs
+        val lat = intent.getDoubleExtra("notif_lat", 39.9048)
+        val lng = intent.getDoubleExtra("notif_lng", 41.2678)
+        val location = LatLng(lat, lng)
+
+        // İşaretçi ekle ve odakla
+        mMap.addMarker(MarkerOptions().position(location).title("Olay Konumu"))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+
+        // Mini harita olduğu için kaydırmayı kapatt
+        mMap.uiSettings.isScrollGesturesEnabled = false
     }
 
     private fun checkUserRole() {
@@ -52,6 +88,43 @@ class NotificationDetailActivity : AppCompatActivity() {
                 if (role == "Admin") {
                     findViewById<Button>(R.id.btnUpdateStatus).visibility = View.VISIBLE
                 }
+            }
+        }
+    }
+
+    private fun checkFollowStatus() {
+        val currentUserId = auth.currentUser?.uid ?: return
+        notificationId?.let { id ->
+            db.collection("notifications").document(id).get().addOnSuccessListener { doc ->
+                val followers = doc.get("followers") as? List<String>
+                if (followers != null && followers.contains(currentUserId)) {
+                    isFollowing = true
+                    btnFollow.text = "Takibi Bırak"
+                } else {
+                    isFollowing = false
+                    btnFollow.text = "Bildirimi Takip Et"
+                }
+            }
+        }
+    }
+
+    private fun toggleFollow() {
+        val currentUserId = auth.currentUser?.uid ?: return
+        val docRef = notificationId?.let { db.collection("notifications").document(it) } ?: return
+
+        if (!isFollowing) {
+            // Takip  ekle
+            docRef.update("followers", FieldValue.arrayUnion(currentUserId)).addOnSuccessListener {
+                isFollowing = true
+                btnFollow.text = "Takibi Bırak"
+                Toast.makeText(this, "Takip listesine eklendi", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // Takip çıkar
+            docRef.update("followers", FieldValue.arrayRemove(currentUserId)).addOnSuccessListener {
+                isFollowing = false
+                btnFollow.text = "Bildirimi Takip Et"
+                Toast.makeText(this, "Takip listesinden çıkarıldı", Toast.LENGTH_SHORT).show()
             }
         }
     }
