@@ -63,12 +63,28 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
             "Çözüldü" -> holder.status.setTextColor(Color.GREEN)
             else -> holder.status.setTextColor(Color.GRAY)
         }
-        // tür renkleri
+        // tür renkleri ve türler
         when (notification.type) {
-            "Sağlık" -> holder.icon.setImageResource(android.R.drawable.ic_menu_mylocation) // Buraya kendi ikonlarını koyabilirsin
-            "Güvenlik" -> holder.icon.setImageResource(android.R.drawable.ic_lock_lock)
-            "Çevre" -> holder.icon.setImageResource(android.R.drawable.ic_menu_compass)
-            else -> holder.icon.setImageResource(android.R.drawable.ic_dialog_info)
+            "Sağlık" -> {
+                holder.icon.setImageResource(R.drawable.ic_saglik_yeni)
+                holder.icon.setColorFilter(Color.RED)
+            }
+            "Güvenlik" -> {
+                holder.icon.setImageResource(android.R.drawable.ic_lock_lock)
+                holder.icon.setColorFilter(Color.BLACK)
+            }
+            "Çevre" -> {
+                holder.icon.setImageResource(R.drawable.ic_cevre_yeni)
+                holder.icon.setColorFilter(Color.parseColor("#4CAF50")) // Yeşil
+            }
+            "Teknik" -> {//turuncu
+                holder.icon.setImageResource(android.R.drawable.ic_menu_preferences)
+                holder.icon.setColorFilter(Color.parseColor("#FF9800"))
+            }
+            else -> {
+                holder.icon.setImageResource(android.R.drawable.ic_dialog_info)
+                holder.icon.setColorFilter(Color.GRAY)
+            }
         }
 
         // Liste elemanına tıklandığında detay ekranına geçiş

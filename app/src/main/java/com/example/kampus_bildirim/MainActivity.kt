@@ -66,6 +66,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnAll).setOnClickListener { adapter.updateList(notificationList) }
         findViewById<Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
         findViewById<Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
+        //sonradan eklenen
+        findViewById<Button>(R.id.btnEnvironment).setOnClickListener { filterByType("Çevre") }
+        findViewById<Button>(R.id.btnTechnical).setOnClickListener { filterByType("Teknik") }
 
         //  Sadece "Açık" olanlar
         findViewById<Button>(R.id.btnOpenOnly).setOnClickListener {
@@ -83,7 +86,10 @@ class MainActivity : AppCompatActivity() {
         }
         //  Admin Yetki Alanı
         findViewById<Button>(R.id.btnAdminOnly).setOnClickListener {
-            filterByType("Teknik") // Adminin türü neyse o filtreyi uygular
+            // tam yetki
+            val filtered = notificationList.filter { it.status != "Çözüldü" }
+            adapter.updateList(filtered)
+            Toast.makeText(this, "Tüm kategorilerdeki aktif bildirimler (Admin Yetkisi)", Toast.LENGTH_SHORT).show()
         }
 
     }

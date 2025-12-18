@@ -71,6 +71,8 @@
                 <Button android:id="@+id/btnAll" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Hepsi" />
                 <Button android:id="@+id/btnHealth" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Sağlık" />
                 <Button android:id="@+id/btnSecurity" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Güvenlik" />
+                <Button android:id="@+id/btnTechnical" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Teknik" />
+                <Button android:id="@+id/btnEnvironment" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Çevre" />
                 <Button android:id="@+id/btnOpenOnly" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Sadece Açık" />
                 <Button android:id="@+id/btnFollowed" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp" android:text="Takip Ettiklerim" />
                 <Button android:id="@+id/btnAdminOnly" style="?android:attr/buttonStyleSmall" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Yetki Alanım" />
