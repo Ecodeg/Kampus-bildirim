@@ -70,6 +70,32 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
             "Çevre" -> holder.icon.setImageResource(android.R.drawable.ic_menu_compass)
             else -> holder.icon.setImageResource(android.R.drawable.ic_dialog_info)
         }
+
+        // Liste elemanına tıklandığında detay ekranına geçiş
+        holder.itemView.setOnClickListener {
+            val context = holder.itemView.context
+            val intent = android.content.Intent(context, NotificationDetailActivity::class.java)
+
+            // bilgi alanlarının  aktarımı
+            intent.putExtra("notif_id", notification.id)
+            intent.putExtra("notif_title", notification.title)
+            intent.putExtra("notif_desc", notification.description)
+            intent.putExtra("notif_type", notification.type)
+            intent.putExtra("notif_status", notification.status)
+
+            // Konum verileri
+            intent.putExtra("notif_lat", notification.latitude)
+            intent.putExtra("notif_lng", notification.longitude)
+
+            // Zaman bilgisi formatlama
+            val sdfDetail = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+            val dateStr = notification.creationTime?.toDate()?.let {
+                sdfDetail.format(it)
+            } ?: "Bilinmiyor"
+            intent.putExtra("notif_time", dateStr)
+
+            context.startActivity(intent)
+        }
     }
 
     // listedeki öge sayısı

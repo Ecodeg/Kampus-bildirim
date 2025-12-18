@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var db: FirebaseFirestore
+    
     private var notificationId: String? = null
     //yeni eklenen bileşenler
     private lateinit var mMap: GoogleMap
