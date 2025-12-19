@@ -147,32 +147,36 @@ class MainActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
 
         db.collection("emergency_announcements")
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .limit(1)
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) return@addSnapshotListener
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    android.util.Log.e("AcilDurum", "Firestore Hatası: ${error.message}")
+                    return@addSnapshotListener
+                }
 
-                for (doc in snapshots!!.documentChanges) {
-                    if (doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
-                        val docId = doc.document.id //duyurunun ıdsi
-                        val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+                if (value != null && !value.isEmpty) {
+                    val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
+                    val doc = docs[0]
+                    val docId = doc.id
+                    val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
 
-                        // Eğer bu duyuruyu daha önce görmediysek göster
-                        if (docId != lastSeenId) {
-                            val message = doc.document.getString("message")
+                    android.util.Log.d("AcilDurum", "En son döküman ID: $docId, Görülen ID: $lastSeenId")
 
+                    if (true) { // lastend yazılabilir
+                        val message = doc.getString("message") ?: "Mesaj bulunamadı"
+                        runOnUiThread {
                             androidx.appcompat.app.AlertDialog.Builder(this)
                                 .setTitle("⚠️ ACİL DURUM DUYURUSU")
                                 .setMessage(message)
                                 .setCancelable(false)
                                 .setPositiveButton("Anladım") { dialog, _ ->
-                                    // "Anladım" deyince bu ID'yi hafızaya kaydet(duyuruyu bir daha gösterme)
                                     sharedPrefs.edit().putString("last_emergency_id", docId).apply()
                                     dialog.dismiss()
                                 }
                                 .show()
                         }
                     }
+                } else {
+                    android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
                 }
             }
 
@@ -205,45 +209,43 @@ class MainActivity : AppCompatActivity() {
     private fun fetchNotifications() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-        // Kullanıcının tercihlerini dinle
-        db.collection("users").document(userId).addSnapshotListener { userDoc, _ ->
-            if (userDoc != null && userDoc.exists()) {
-                val prefHealth = userDoc.getBoolean("pref_health") ?: false
-                val prefSecurity = userDoc.getBoolean("pref_security") ?: false
-                val prefTechnical = userDoc.getBoolean("pref_technical") ?: false
-                val prefEnv = userDoc.getBoolean("pref_environment") ?: false
-                val prefOthers = userDoc.getBoolean("pref_others") ?: false
+        db.collection("users").document(userId).addSnapshotListener { userDoc, userError ->
 
-                // Bildirimleri dinle
-                db.collection("notifications")
-                    .orderBy("creationTime", Query.Direction.DESCENDING)
-                    .addSnapshotListener { value, error ->
-                        if (value != null) {
-                            notificationList.clear()
-                            for (doc in value.documents) {
-                                val type = doc.getString("type")
+            // Eğer kullanıcı dökümanı boşsa true  kabul et
+            val prefHealth = if (userDoc?.contains("pref_health") == true) userDoc.getBoolean("pref_health") ?: true else true
+            val prefSecurity = if (userDoc?.contains("pref_security") == true) userDoc.getBoolean("pref_security") ?: true else true
+            val prefTechnical = if (userDoc?.contains("pref_technical") == true) userDoc.getBoolean("pref_technical") ?: true else true
+            val prefEnv = if (userDoc?.contains("pref_environment") == true) userDoc.getBoolean("pref_environment") ?: true else true
+            val prefOthers = if (userDoc?.contains("pref_others") == true) userDoc.getBoolean("pref_others") ?: true else true
 
-                                // Tercihlere göre filtrele
-                                val isVisible = when (type) {
-                                    "Sağlık" -> prefHealth
-                                    "Güvenlik" -> prefSecurity
-                                    "Teknik" -> prefTechnical
-                                    "Çevre" -> prefEnv
-                                    "Diğer" -> prefOthers
-                                    else -> true
-                                }
+            db.collection("notifications")
+                .orderBy("creationTime", Query.Direction.DESCENDING)
+                .addSnapshotListener { value, error ->
+                    // hata kontrolü
+                    if (value != null) {
+                        notificationList.clear()
+                        for (doc in value.documents) {
+                            val type = doc.getString("type")
 
-                                if (isVisible) {
-                                    val notification = doc.toObject(Notification::class.java)
-                                    notification?.let {
-                                        notificationList.add(it.copy(id = doc.id))
-                                    }
+                            // Filtreleme
+                            val isVisible = when (type) {
+                                "Sağlık" -> prefHealth
+                                "Güvenlik" -> prefSecurity
+                                "Teknik" -> prefTechnical
+                                "Çevre" -> prefEnv
+                                "Diğer" -> prefOthers
+                                else -> true // Tipi belirsiz olanları her zaman göster
+                            }
+
+                            if (isVisible) {
+                                val notification = doc.toObject(Notification::class.java)
+                                notification?.let {
+                                    notificationList.add(it.copy(id = doc.id))
                                 }
                             }
-                            adapter.updateList(notificationList)
                         }
+                        adapter.updateList(notificationList)
                     }
-            }
+                }
         }
-    }
-}
+    }}
