@@ -26,8 +26,13 @@ class AdminPanelActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
-        // Admin değilse kapat
-        checkAdminAccess()
+        val roleFromIntent = intent.getStringExtra("USER_ROLE")
+        if (roleFromIntent == "Admin") {
+            // Direkt aç, kontrole gerek yok
+        } else {
+            checkAdminAccess() // Emin olmak için yine de kontrol et
+        }
+
 
         //  Bileşenlerini Bağla
         recyclerView = findViewById(R.id.rvAdminNotifications)
@@ -36,8 +41,31 @@ class AdminPanelActivity : AppCompatActivity() {
         adapter = NotificationAdapter(notificationList)
         recyclerView.adapter = adapter
 
+        adapter.setOnItemClickListener { notification ->
+            // Durum Döngüsü: Açık -> İnceleniyor -> Çözüldü -> Açık
+            val yeniDurum = when (notification.status) {
+                "Açık" -> "İnceleniyor"
+                "İnceleniyor" -> "Çözüldü"
+                else -> "Açık"
+            }
+
+            // veritabanıyla ilgili dökümanı güncelle
+            notification.id?.let { docId ->
+                db.collection("notifications").document(docId)
+                    .update("status", yeniDurum)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Durum '$yeniDurum' olarak güncellendi", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+        }
+
         val etEmergencyMessage = findViewById<EditText>(R.id.etEmergencyMessage)
         val btnSendEmergency = findViewById<Button>(R.id.btnSendEmergency)
+
+
 
         //Verileri Getir
         fetchAllNotifications()
@@ -57,10 +85,18 @@ class AdminPanelActivity : AppCompatActivity() {
     private fun checkAdminAccess() {
         val uid = auth.currentUser?.uid ?: return
         db.collection("users").document(uid).get().addOnSuccessListener { doc ->
-            if (doc.getString("role") != "Admin") {
+            val role = doc.getString("role")?.trim()
+
+
+            if (!role.equals("Admin", ignoreCase = true)) {
                 Toast.makeText(this, "Yetkisiz erişim!", Toast.LENGTH_SHORT).show()
-                finish()
+                finish() // admin değilse  kapat
+            } else {
+                android.util.Log.d("AdminPanel", "Erişim onaylandı, hoş geldiniz Admin.")
             }
+        }.addOnFailureListener {
+            // herhangi bir hatada kullanıcıyı uyarabilir
+            android.util.Log.e("AdminPanel", "Rol doğrulama hatası.")
         }
     }
 

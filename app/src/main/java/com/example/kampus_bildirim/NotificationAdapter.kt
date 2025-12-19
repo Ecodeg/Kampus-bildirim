@@ -16,6 +16,12 @@ import java.util.Locale
 class NotificationAdapter(private var notificationList: List<Notification>) :
     RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder>() {
 
+    private var onItemClickListener: ((Notification) -> Unit)? = null
+
+    fun setOnItemClickListener(listener: (Notification) -> Unit) {
+        onItemClickListener = listener
+    }
+
     fun updateList(newList: List<Notification>) {
         notificationList = newList
         notifyDataSetChanged()
@@ -90,27 +96,28 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
         // Liste elemanına tıklandığında detay ekranına geçiş
         holder.itemView.setOnClickListener {
             val context = holder.itemView.context
-            val intent = android.content.Intent(context, NotificationDetailActivity::class.java)
 
-            // bilgi alanlarının  aktarımı
-            intent.putExtra("notif_id", notification.id)
-            intent.putExtra("notif_title", notification.title)
-            intent.putExtra("notif_desc", notification.description)
-            intent.putExtra("notif_type", notification.type)
-            intent.putExtra("notif_status", notification.status)
+            // adminden tıklama varsa çalıştır
+            if (onItemClickListener != null) {
+                onItemClickListener?.invoke(notification)
+            } else {
+                // tıklama yoksa detay ekranına git 
+                val intent = android.content.Intent(context, NotificationDetailActivity::class.java)
 
-            // Konum verileri
-            intent.putExtra("notif_lat", notification.latitude)
-            intent.putExtra("notif_lng", notification.longitude)
+                intent.putExtra("notif_id", notification.id)
+                intent.putExtra("notif_title", notification.title)
+                intent.putExtra("notif_desc", notification.description)
+                intent.putExtra("notif_type", notification.type)
+                intent.putExtra("notif_status", notification.status)
+                intent.putExtra("notif_lat", notification.latitude)
+                intent.putExtra("notif_lng", notification.longitude)
 
-            // Zaman bilgisi formatlama
-            val sdfDetail = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-            val dateStr = notification.creationTime?.toDate()?.let {
-                sdfDetail.format(it)
-            } ?: "Bilinmiyor"
-            intent.putExtra("notif_time", dateStr)
+                val sdfDetail = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+                val dateStr = notification.creationTime?.toDate()?.let { sdfDetail.format(it) } ?: "Bilinmiyor"
+                intent.putExtra("notif_time", dateStr)
 
-            context.startActivity(intent)
+                context.startActivity(intent)
+            }
         }
     }
 

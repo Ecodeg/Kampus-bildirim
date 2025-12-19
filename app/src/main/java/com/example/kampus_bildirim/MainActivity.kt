@@ -96,6 +96,43 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filtered)
             Toast.makeText(this, "Tüm kategorilerdeki aktif bildirimler (Admin Yetkisi)", Toast.LENGTH_SHORT).show()
         }
+        // xmldeki butonu koda bağla
+        val btnAdminPanel = findViewById<Button>(R.id.btnAdminPanel)
+
+        //  Mevcut kullanıcının rolünü Firestore'dan çek
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserId != null) {
+
+            db.collection("users").document(currentUserId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // Veriyi al ve boşlukları temizle
+                        val role = document.getString("role")?.trim()
+                        android.util.Log.d("RolKontrol", "Gelen Temiz Rol: '$role'")
+
+                        if (role.equals("Admin", ignoreCase = true)) {
+                            android.util.Log.d("RolKontrol", "BAŞARILI: Admin rolü onaylandı.")
+                            btnAdminPanel.visibility = android.view.View.VISIBLE //buton görme
+                            btnAdminPanel.setOnClickListener {
+                                val intent = Intent(this, AdminPanelActivity::class.java)
+                                intent.putExtra("USER_ROLE", "Admin") // Rolü  gönder
+                                startActivity(intent)
+                            }
+                        } else {
+                            android.util.Log.d("RolKontrol", "HATA: Beklenen: Admin, Gelen: $role")
+                            btnAdminPanel.visibility = android.view.View.GONE
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("RolKontrol", "Hata: ${e.message}")
+                    btnAdminPanel.visibility = android.view.View.GONE
+                }
+                .addOnFailureListener {
+                    // Hata durumunda buton gizli
+                    btnAdminPanel.visibility = android.view.View.GONE
+                }
+        }
 
     }
 
@@ -134,7 +171,7 @@ class MainActivity : AppCompatActivity() {
 
                     notificationList.clear()
                     for (doc in value.documents) {
-                        // Her bir dökümanın ID'sini yazdıralım
+                        //herhangi bir döküman ıdsi
                         android.util.Log.d("FirestoreVeri", "Gelen Döküman ID: ${doc.id}")
 
                         val notification = doc.toObject(Notification::class.java)
