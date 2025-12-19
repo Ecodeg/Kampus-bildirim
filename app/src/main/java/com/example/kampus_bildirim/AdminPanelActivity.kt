@@ -17,6 +17,7 @@ class AdminPanelActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: NotificationAdapter // Admine özel adapter
+    private lateinit var notificationList: ArrayList<Notification>//hata aldığım yeri düzeltmek için sınıf tanımlandı
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
