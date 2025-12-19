@@ -38,6 +38,15 @@
         android:textSize="16sp"
         android:text="Olayın açıklaması burada yer alacak." />
 
+    <ImageView
+        android:id="@+id/ivDetayFoto"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginTop="12dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:background="#EEEEEE" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

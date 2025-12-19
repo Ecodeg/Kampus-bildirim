@@ -14,9 +14,12 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+
+import android.widget.ImageView
 
 class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -35,7 +38,7 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
-        //  butonu xml ıdsine göre bağla 
+        //  butonu xml ıdsine göre bağla
         btnFollow = findViewById(R.id.btnFollow)
 
         // Verileri al
@@ -53,6 +56,23 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<TextView>(R.id.tvDetayTur).text = "Tür: $type"
         findViewById<TextView>(R.id.tvDetayDurum).text = "Durum: $status"
         findViewById<TextView>(R.id.tvDetayZaman).text = time // Zaman bilgisini buraya yazdık
+
+        // Base 64'den görsele dönüştürme
+        val photoBase64 = intent.getStringExtra("notif_photoUrl")
+        val ivDetayFoto = findViewById<ImageView>(R.id.ivDetayFoto)
+
+        if (!photoBase64.isNullOrEmpty() && photoBase64 != "null") {
+            ivDetayFoto.visibility = View.VISIBLE
+            try {
+                val imageBytes = android.util.Base64.decode(photoBase64, android.util.Base64.DEFAULT)
+                val decodedImage = android.graphics.BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                ivDetayFoto.setImageBitmap(decodedImage)
+            } catch (e: Exception) {
+                ivDetayFoto.visibility = View.GONE
+            }
+        } else {
+            ivDetayFoto.visibility = View.GONE
+        }
 
         // Mini Haritayı Başlat
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mini_map) as SupportMapFragment
@@ -153,7 +173,6 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                     "İnceleniyor" -> "Çözüldü"
                     else -> "Açık"
                 }
-
                 docRef.update("status", nextStatus).addOnSuccessListener {
                     findViewById<TextView>(R.id.tvDetayDurum).text = "Durum: $nextStatus"
                     Toast.makeText(this, "Durum $nextStatus olarak güncellendi", Toast.LENGTH_SHORT).show()

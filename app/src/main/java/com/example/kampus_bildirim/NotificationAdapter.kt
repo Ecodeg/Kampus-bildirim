@@ -99,6 +99,8 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
             intent.putExtra("notif_type", notification.type)
             intent.putExtra("notif_status", notification.status)
 
+            intent.putExtra("notif_photoUrl", notification.photoUrl)
+
             // Konum verileri
             intent.putExtra("notif_lat", notification.latitude)
             intent.putExtra("notif_lng", notification.longitude)

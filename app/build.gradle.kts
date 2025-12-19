@@ -62,6 +62,7 @@ dependencies {
 
     // Storage (fotoğraf yükleme)
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // Messaging (bildirimler)
     implementation("com.google.firebase:firebase-messaging")

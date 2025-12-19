@@ -18,7 +18,7 @@ class AddNotificationActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var latitude: Double = 0.0
     private var longitude: Double = 0.0
-    private var selectedImageUri: Uri? = null // Resmin yolu
+    private var selectedImageUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,16 +31,16 @@ class AddNotificationActivity : AppCompatActivity() {
         val tvLocStatus = findViewById<TextView>(R.id.tvLocationStatus)
         val btnSave = findViewById<Button>(R.id.btnSaveNotification)
 
-
         val ivPreview = findViewById<ImageView>(R.id.ivPreview)
         val btnSelectPhoto = findViewById<Button>(R.id.btnSelectPhoto)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Spinner'a türleri ekle
+        // Spinner ayarları
         val types = arrayOf("Sağlık", "Güvenlik", "Teknik", "Çevre", "Diğer")
         spinnerType.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, types)
 
+        // Fotoğraf seçme
         val pickImage = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.GetContent()) { uri: Uri? ->
             if (uri != null) {
                 selectedImageUri = uri
@@ -65,20 +65,16 @@ class AddNotificationActivity : AppCompatActivity() {
             val type = spinnerType.selectedItem.toString()
             val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-            // Form Doğrulaması
-            if (title.isEmpty()) {
-                etTitle.error = "Başlık boş olamaz"
-                return@setOnClickListener
-            }
-            if (desc.isEmpty()) {
-                etDesc.error = "Açıklama boş olamaz"
-                return@setOnClickListener
-            }
+            // Form kontrolü
+            if (title.isEmpty()) { etTitle.error = "Başlık boş olamaz"; return@setOnClickListener }
+            if (desc.isEmpty()) { etDesc.error = "Açıklama boş olamaz"; return@setOnClickListener }
             if (latitude == 0.0) {
                 Toast.makeText(this, "Lütfen konum alın!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            // Görseli base 64'e dönüştürme
+            val base64Photo = selectedImageUri?.let { encodeImageToBase64(it) }
 
             val newNotification = Notification(
                 userId = userId,
@@ -88,10 +84,35 @@ class AddNotificationActivity : AppCompatActivity() {
                 latitude = latitude,
                 longitude = longitude,
                 status = "Açık",
-                photoUrl = selectedImageUri?.toString()
+                photoUrl = base64Photo // URL değil, metin gidiyor
             )
 
             saveToFirestore(newNotification)
+        }
+    }
+
+    // Görseli firebase için uygun hale getirme
+    private fun encodeImageToBase64(uri: Uri): String? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            var bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+
+            // Boyut küçültme
+            val maxSize = 800
+            val ratio = Math.min(maxSize.toFloat() / bitmap.width, maxSize.toFloat() / bitmap.height)
+            val width = Math.round(ratio * bitmap.width)
+            val height = Math.round(ratio * bitmap.height)
+            bitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, width, height, true)
+
+            val outputStream = java.io.ByteArrayOutputStream()
+
+            // Çok büyük olunca hata veriyor bildirimi yüklemiyor, bu yüzden; daha da küçültüyoruz
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 20, outputStream)
+
+            val byteArray = outputStream.toByteArray()
+            android.util.Base64.encodeToString(byteArray, android.util.Base64.DEFAULT)
+        } catch (e: Exception) {
+            null
         }
     }
 
