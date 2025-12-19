@@ -101,7 +101,7 @@ class NotificationAdapter(private var notificationList: List<Notification>) :
             if (onItemClickListener != null) {
                 onItemClickListener?.invoke(notification)
             } else {
-                // tıklama yoksa detay ekranına git 
+                // tıklama yoksa detay ekranına git
                 val intent = android.content.Intent(context, NotificationDetailActivity::class.java)
 
                 intent.putExtra("notif_id", notification.id)

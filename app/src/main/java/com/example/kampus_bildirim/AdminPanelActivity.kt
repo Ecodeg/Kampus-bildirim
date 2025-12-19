@@ -128,7 +128,7 @@ class AdminPanelActivity : AppCompatActivity() {
 
         db.collection("emergency_announcements").add(announcement)
             .addOnSuccessListener {
-                Toast.makeText(this, "Acil durum duyurusu yayınlandı!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Acil durum duyurusu tüm kampüse yayınlandı!", Toast.LENGTH_LONG).show()
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()

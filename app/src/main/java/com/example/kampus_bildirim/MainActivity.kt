@@ -102,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         //  Mevcut kullanıcının rolünü Firestore'dan çek
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
         if (currentUserId != null) {
-
             db.collection("users").document(currentUserId).get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
@@ -133,6 +132,38 @@ class MainActivity : AppCompatActivity() {
                     btnAdminPanel.visibility = android.view.View.GONE
                 }
         }
+        // acil durum bildirim
+        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+
+        db.collection("emergency_announcements")
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) return@addSnapshotListener
+
+                for (doc in snapshots!!.documentChanges) {
+                    if (doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        val docId = doc.document.id //duyurunun ıdsi
+                        val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+
+                        // Eğer bu duyuruyu daha önce görmediysek göster
+                        if (docId != lastSeenId) {
+                            val message = doc.document.getString("message")
+
+                            androidx.appcompat.app.AlertDialog.Builder(this)
+                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
+                                .setMessage(message)
+                                .setCancelable(false)
+                                .setPositiveButton("Anladım") { dialog, _ ->
+                                    // "Anladım" deyince bu ID'yi hafızaya kaydet(duyuruyu bir daha gösterme)
+                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
+                                    dialog.dismiss()
+                                }
+                                .show()
+                        }
+                    }
+                }
+            }
 
     }
 
