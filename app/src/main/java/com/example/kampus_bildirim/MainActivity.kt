@@ -52,6 +52,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // Profil butonu
+        val btnProfile = findViewById<android.widget.ImageButton>(R.id.btnProfile)
+        btnProfile.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+        }
+
         findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAddNotification).setOnClickListener {
             val intent = Intent(this, AddNotificationActivity::class.java)
             startActivity(intent)
@@ -71,7 +78,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnAll).setOnClickListener { adapter.updateList(notificationList) }
         findViewById<Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
         findViewById<Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
-        //sonradan eklenen
         findViewById<Button>(R.id.btnEnvironment).setOnClickListener { filterByType("Çevre") }
         findViewById<Button>(R.id.btnTechnical).setOnClickListener { filterByType("Teknik") }
 
@@ -85,8 +91,11 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnFollowed).setOnClickListener {
             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-            // Bildirimi oluşturan değil, takipçiler listesinde olanları filtrele
             val filtered = notificationList.filter { it.followers.contains(currentUserId) }
+
+            if (filtered.isEmpty()) {
+                Toast.makeText(this, "Henüz takip ettiğiniz bir bildirim yok", Toast.LENGTH_SHORT).show()
+            }
             adapter.updateList(filtered)
         }
         //  Admin Yetki Alanı
@@ -97,6 +106,11 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Tüm kategorilerdeki aktif bildirimler (Admin Yetkisi)", Toast.LENGTH_SHORT).show()
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        fetchNotifications() // Ana sayfaya her geri gelindiğinde bildirim tercihlerini kontrol eder
     }
 
     private fun filterList(query: String) {
@@ -119,31 +133,47 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun fetchNotifications() {
-        db.collection("notifications")
-            .orderBy("creationTime", Query.Direction.DESCENDING)
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    // hata varsa çalışacak
-                    android.util.Log.e("FirestoreVeri", "HATA ALINDI: ${error.message}")
-                    return@addSnapshotListener
-                }
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
-                if (value != null) {
-                    // veri gelirse burası
-                    android.util.Log.d("FirestoreVeri", "Firebase'den ${value.size()} adet döküman geldi.")
+        // Kullanıcının tercihlerini dinle
+        db.collection("users").document(userId).addSnapshotListener { userDoc, _ ->
+            if (userDoc != null && userDoc.exists()) {
+                val prefHealth = userDoc.getBoolean("pref_health") ?: false
+                val prefSecurity = userDoc.getBoolean("pref_security") ?: false
+                val prefTechnical = userDoc.getBoolean("pref_technical") ?: false
+                val prefEnv = userDoc.getBoolean("pref_environment") ?: false
+                val prefOthers = userDoc.getBoolean("pref_others") ?: false
 
-                    notificationList.clear()
-                    for (doc in value.documents) {
-                        // Her bir dökümanın ID'sini yazdıralım
-                        android.util.Log.d("FirestoreVeri", "Gelen Döküman ID: ${doc.id}")
+                // Bildirimleri dinle
+                db.collection("notifications")
+                    .orderBy("creationTime", Query.Direction.DESCENDING)
+                    .addSnapshotListener { value, error ->
+                        if (value != null) {
+                            notificationList.clear()
+                            for (doc in value.documents) {
+                                val type = doc.getString("type")
 
-                        val notification = doc.toObject(Notification::class.java)
-                        notification?.let {
-                            notificationList.add(it.copy(id = doc.id))
+                                // Tercihlere göre filtrele
+                                val isVisible = when (type) {
+                                    "Sağlık" -> prefHealth
+                                    "Güvenlik" -> prefSecurity
+                                    "Teknik" -> prefTechnical
+                                    "Çevre" -> prefEnv
+                                    "Diğer" -> prefOthers
+                                    else -> true
+                                }
+
+                                if (isVisible) {
+                                    val notification = doc.toObject(Notification::class.java)
+                                    notification?.let {
+                                        notificationList.add(it.copy(id = doc.id))
+                                    }
+                                }
+                            }
+                            adapter.updateList(notificationList)
                         }
                     }
-                    adapter.updateList(notificationList)
-                }
             }
+        }
     }
 }

@@ -17,6 +17,9 @@
         android:theme="@style/Theme.Kampusbildirim"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".AddNotificationActivity"
             android:exported="false" />
         <activity
