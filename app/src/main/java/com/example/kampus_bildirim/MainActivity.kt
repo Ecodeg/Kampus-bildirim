@@ -78,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnAll).setOnClickListener { adapter.updateList(notificationList) }
         findViewById<Button>(R.id.btnHealth).setOnClickListener { filterByType("Sağlık") }
         findViewById<Button>(R.id.btnSecurity).setOnClickListener { filterByType("Güvenlik") }
+        //sonradan eklenen
         findViewById<Button>(R.id.btnEnvironment).setOnClickListener { filterByType("Çevre") }
         findViewById<Button>(R.id.btnTechnical).setOnClickListener { filterByType("Teknik") }
 
@@ -91,6 +92,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnFollowed).setOnClickListener {
             val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+            // Bildirimi oluşturan değil, takipçiler listesinde olanları filtrele
             val filtered = notificationList.filter { it.followers.contains(currentUserId) }
 
             if (filtered.isEmpty()) {
@@ -105,6 +107,74 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filtered)
             Toast.makeText(this, "Tüm kategorilerdeki aktif bildirimler (Admin Yetkisi)", Toast.LENGTH_SHORT).show()
         }
+        // xmldeki butonu koda bağla
+        val btnAdminPanel = findViewById<Button>(R.id.btnAdminPanel)
+
+        //  Mevcut kullanıcının rolünü Firestore'dan çek
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserId != null) {
+            db.collection("users").document(currentUserId).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // Veriyi al ve boşlukları temizle
+                        val role = document.getString("role")?.trim()
+                        android.util.Log.d("RolKontrol", "Gelen Temiz Rol: '$role'")
+
+                        if (role.equals("Admin", ignoreCase = true)) {
+                            android.util.Log.d("RolKontrol", "BAŞARILI: Admin rolü onaylandı.")
+                            btnAdminPanel.visibility = android.view.View.VISIBLE //buton görme
+                            btnAdminPanel.setOnClickListener {
+                                val intent = Intent(this, AdminPanelActivity::class.java)
+                                intent.putExtra("USER_ROLE", "Admin") // Rolü  gönder
+                                startActivity(intent)
+                            }
+                        } else {
+                            android.util.Log.d("RolKontrol", "HATA: Beklenen: Admin, Gelen: $role")
+                            btnAdminPanel.visibility = android.view.View.GONE
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("RolKontrol", "Hata: ${e.message}")
+                    btnAdminPanel.visibility = android.view.View.GONE
+                }
+                .addOnFailureListener {
+                    // Hata durumunda buton gizli
+                    btnAdminPanel.visibility = android.view.View.GONE
+                }
+        }
+        // acil durum bildirim
+        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+
+        db.collection("emergency_announcements")
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(1)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) return@addSnapshotListener
+
+                for (doc in snapshots!!.documentChanges) {
+                    if (doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                        val docId = doc.document.id //duyurunun ıdsi
+                        val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+
+                        // Eğer bu duyuruyu daha önce görmediysek göster
+                        if (docId != lastSeenId) {
+                            val message = doc.document.getString("message")
+
+                            androidx.appcompat.app.AlertDialog.Builder(this)
+                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
+                                .setMessage(message)
+                                .setCancelable(false)
+                                .setPositiveButton("Anladım") { dialog, _ ->
+                                    // "Anladım" deyince bu ID'yi hafızaya kaydet(duyuruyu bir daha gösterme)
+                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
+                                    dialog.dismiss()
+                                }
+                                .show()
+                        }
+                    }
+                }
+            }
 
     }
 

@@ -20,6 +20,9 @@
             android:name=".ProfileActivity"
             android:exported="false" />
         <activity
+            android:name=".AdminPanelActivity"
+            android:exported="false" />
+        <activity
             android:name=".AddNotificationActivity"
             android:exported="false" />
         <activity
