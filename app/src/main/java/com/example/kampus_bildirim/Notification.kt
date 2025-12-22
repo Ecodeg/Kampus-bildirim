@@ -6,6 +6,7 @@ import java.util.Date
 data class Notification(
     val id: String? = null,
     val userId: String? = null, // Bildirimi oluşturan kullanıcının ID'si
+    val unit: String = "", //  Bildirimin hangi birime (fakülteye) ait olduğunu gösterir 
     val type: String = "", // Tür (Sağlık, Güvenlik, Çevre vb.)
     val title: String = "",
     val description: String = "",
