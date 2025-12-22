@@ -58,7 +58,7 @@ class AddNotificationActivity : AppCompatActivity() {
             getLocation(tvLocStatus)
         }
 
-        // Kaydet butonu
+        // güncellenen kaydet butonu
         btnSave.setOnClickListener {
             val title = etTitle.text.toString().trim()
             val desc = etDesc.text.toString().trim()
@@ -72,25 +72,38 @@ class AddNotificationActivity : AppCompatActivity() {
                 Toast.makeText(this, "Lütfen konum alın!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
             // Görseli base 64'e dönüştürme
             val base64Photo = selectedImageUri?.let { encodeImageToBase64(it) }
 
-            val newNotification = Notification(
-                userId = userId,
-                type = type,
-                title = title,
-                description = desc,
-                latitude = latitude,
-                longitude = longitude,
-                status = "Açık",
-                photoUrl = base64Photo // URL değil, metin gidiyor
-            )
+            // kullanıcı bildirimi çek sonra bildirimi kaydet
+            if (userId != null) {
+                val db = FirebaseFirestore.getInstance()
+                db.collection("users").document(userId).get()
+                    .addOnSuccessListener { userDoc ->
+                        // kullanıcıdan unit i al
+                        val userUnit = userDoc.getString("unit") ?: "Bilinmiyor"
 
-            saveToFirestore(newNotification)
+                        // bildirimi unit ile doldur
+                        val newNotification = Notification(
+                            userId = userId,
+                            unit = userUnit, // Notificationa eklediğim alan
+                            type = type,
+                            title = title,
+                            description = desc,
+                            latitude = latitude,
+                            longitude = longitude,
+                            status = "Açık",
+                            photoUrl = base64Photo
+                        )
+
+                        saveToFirestore(newNotification)
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "Kullanıcı bilgisi alınamadı: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
         }
     }
-
     // Görseli firebase için uygun hale getirme
     private fun encodeImageToBase64(uri: Uri): String? {
         return try {
@@ -104,9 +117,8 @@ class AddNotificationActivity : AppCompatActivity() {
             val height = Math.round(ratio * bitmap.height)
             bitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, width, height, true)
 
-            val outputStream = java.io.ByteArrayOutputStream()
-
             // Çok büyük olunca hata veriyor bildirimi yüklemiyor, bu yüzden; daha da küçültüyoruz
+            val outputStream = java.io.ByteArrayOutputStream()
             bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 20, outputStream)
 
             val byteArray = outputStream.toByteArray()
