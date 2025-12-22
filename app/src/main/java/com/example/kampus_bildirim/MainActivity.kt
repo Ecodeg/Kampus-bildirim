@@ -183,6 +183,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    // User takip ettiği bir bildirimin durumu değiştiğinde bildirim alır
     private fun listenFollowedNotifications() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 

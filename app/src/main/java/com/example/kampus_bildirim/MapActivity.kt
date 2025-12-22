@@ -95,7 +95,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val tvTime = findViewById<TextView>(R.id.tvMapTime)
         val btnGoDetail = findViewById<Button>(R.id.btnGoDetail)
 
-        // Bilgileri karta yazıyoruz
         tvTitle.text = notif.title
         tvType.text = "Tür: ${notif.type}"
 
@@ -103,9 +102,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val timeAgo = try {
             notif.creationTime?.let {
                 val diff = System.currentTimeMillis() - it.toDate().time
-                val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(diff)
-                val hours = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff)
-
+                val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
+                val hours = TimeUnit.MILLISECONDS.toHours(diff)
                 when {
                     minutes < 1 -> "Şimdi"
                     minutes < 60 -> "$minutes dk önce"
@@ -113,25 +111,24 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     else -> "${hours / 24} gün önce"
                 }
             } ?: "Zaman bilgisi yok"
-        } catch (e: Exception) {
-            "Zaman hesaplanamadı"
-        }
+        } catch (e: Exception) { "Zaman hesaplanamadı" }
 
         tvTime.text = timeAgo
-
-
         infoCard.visibility = View.VISIBLE
 
-        // Detay gör
         btnGoDetail.setOnClickListener {
             val intent = Intent(this, NotificationDetailActivity::class.java)
-            // Tüm bilgileri (ID dahil) detay sayfasına gönderiyoruz
+
+            // Verileri intent'e ekliyoruz
             intent.putExtra("notif_id", notif.id)
             intent.putExtra("notif_title", notif.title)
             intent.putExtra("notif_desc", notif.description)
             intent.putExtra("notif_type", notif.type)
             intent.putExtra("notif_status", notif.status)
-            intent.putExtra("notif_time", timeAgo)
+            intent.putExtra("notif_photoUrl", notif.photoUrl) // Resim verisi aktarılıyor
+            intent.putExtra("notif_lat", notif.latitude)
+            intent.putExtra("notif_lng", notif.longitude)
+
             startActivity(intent)
         }
     }
