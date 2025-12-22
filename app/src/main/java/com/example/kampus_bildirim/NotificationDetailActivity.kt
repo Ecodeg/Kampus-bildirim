@@ -31,6 +31,10 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var btnFollow: Button // Yeni buton
     private var isFollowing = false // Takip durumu kontrolü
 
+    // yeni eklenen butonlar
+    private lateinit var btnEdit: Button
+    private lateinit var btnDelete: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notification_detail)
@@ -40,6 +44,9 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //  butonu xml ıdsine göre bağla
         btnFollow = findViewById(R.id.btnFollow)
+
+        btnEdit = findViewById(R.id.btnEditNotification)
+        btnDelete = findViewById(R.id.btnDeleteNotification)
 
         // Verileri al
         notificationId = intent.getStringExtra("notif_id")
@@ -111,12 +118,22 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun checkUserRole() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-        if (currentUserId != null) {
-            db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
-                val role = doc.getString("role")
-                if (role == "Admin") {
-                    findViewById<Button>(R.id.btnUpdateStatus).visibility = View.VISIBLE
+        val currentUserId = auth.currentUser?.uid ?: return
+        db.collection("users").document(currentUserId).get().addOnSuccessListener { doc ->
+            val role = doc.getString("role")?.trim()
+
+            if (role.equals("Admin", ignoreCase = true)) {
+                // Butonları görünür yapıyoruz
+                findViewById<Button>(R.id.btnUpdateStatus).visibility = View.VISIBLE
+                btnEdit.visibility = View.VISIBLE
+                btnDelete.visibility = View.VISIBLE
+
+                // Tıklama olaylarını tanımlıyoruz
+                btnDelete.setOnClickListener {
+                    deleteNotification()
+                }
+                btnEdit.setOnClickListener {
+                    editNotification()
                 }
             }
         }
@@ -176,6 +193,41 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                 docRef.update("status", nextStatus).addOnSuccessListener {
                     findViewById<TextView>(R.id.tvDetayDurum).text = "Durum: $nextStatus"
                     Toast.makeText(this, "Durum $nextStatus olarak güncellendi", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    private fun deleteNotification() {
+        notificationId?.let { id ->
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Bildirimi Sonlandır")
+                .setMessage("Bu bildirimi uygunsuz olduğu gerekçesiyle silmek istediğinize emin misiniz?")
+                .setPositiveButton("Evet, Sil") { _, _ ->
+                    db.collection("notifications").document(id).delete()
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Bildirim sistemden kaldırıldı.", Toast.LENGTH_SHORT).show()
+                            finish() // Sayfayı kapatır ve listeye döner
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                }
+                .setNegativeButton("Vazgeç", null)
+                .show()
+        }
+    }
+
+    private fun editNotification() {
+        notificationId?.let { id ->
+            val docRef = db.collection("notifications").document(id)
+            docRef.get().addOnSuccessListener { doc ->
+                val currentDesc = doc.getString("description") ?: ""
+                // Admin düzenlemesi olduğunu belirtmek için metni güncelliyoruz
+                val updatedDesc = "[Yönetici Tarafından Düzenlendi] $currentDesc"
+
+                docRef.update("description", updatedDesc).addOnSuccessListener {
+                    findViewById<TextView>(R.id.tvDetayAciklama).text = updatedDesc
+                    Toast.makeText(this, "Açıklama başarıyla güncellendi.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
