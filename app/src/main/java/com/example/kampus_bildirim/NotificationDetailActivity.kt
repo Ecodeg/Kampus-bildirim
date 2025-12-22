@@ -206,7 +206,7 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                     db.collection("notifications").document(id).delete()
                         .addOnSuccessListener {
                             Toast.makeText(this, "Bildirim sistemden kaldırıldı.", Toast.LENGTH_SHORT).show()
-                            finish() // Sayfayı kapatır ve listeye döner
+                            finish() // Sayfayı kapat ve listeye dön
                         }
                         .addOnFailureListener { e ->
                             Toast.makeText(this, "Hata: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -220,16 +220,52 @@ class NotificationDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun editNotification() {
         notificationId?.let { id ->
             val docRef = db.collection("notifications").document(id)
-            docRef.get().addOnSuccessListener { doc ->
-                val currentDesc = doc.getString("description") ?: ""
-                // Admin düzenlemesi olduğunu belirtmek için metni güncelliyoruz
-                val updatedDesc = "[Yönetici Tarafından Düzenlendi] $currentDesc"
 
-                docRef.update("description", updatedDesc).addOnSuccessListener {
-                    findViewById<TextView>(R.id.tvDetayAciklama).text = updatedDesc
-                    Toast.makeText(this, "Açıklama başarıyla güncellendi.", Toast.LENGTH_SHORT).show()
+            // Dikey bir düzen
+            val layout = android.widget.LinearLayout(this)
+            layout.orientation = android.widget.LinearLayout.VERTICAL
+            layout.setPadding(50, 40, 50, 10)
+
+            // Başlık için giriş alanı
+            val etNewTitle = android.widget.EditText(this)
+            etNewTitle.hint = "Yeni Başlık"
+            // Mevcut başlık
+            etNewTitle.setText(findViewById<TextView>(R.id.tvDetayBaslik).text.toString())
+            layout.addView(etNewTitle)
+
+            // Açıklama için giriş alanı
+            val etNewDesc = android.widget.EditText(this)
+            etNewDesc.hint = "Yeni Açıklama"
+            etNewDesc.setText(findViewById<TextView>(R.id.tvDetayAciklama).text.toString())
+            layout.addView(etNewDesc)
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Bildirimi Düzenle")
+                .setMessage("Başlık ve açıklamayı güncelleyebilirsiniz:")
+                .setView(layout) // İki kutucuğu içeren düzen penceresi
+                .setPositiveButton("Güncelle") { _, _ ->
+                    val updatedTitle = etNewTitle.text.toString().trim()
+                    val updatedDesc = etNewDesc.text.toString().trim()
+
+                    if (updatedTitle.isNotEmpty() && updatedDesc.isNotEmpty()) {
+                        // Firestoreda 2 alan güncellenir
+                        val updates = hashMapOf<String, Any>(
+                            "title" to updatedTitle,
+                            "description" to updatedDesc
+                        )
+
+                        docRef.update(updates).addOnSuccessListener {
+                            // Ekrandaki değişikleri anında güncelle
+                            findViewById<TextView>(R.id.tvDetayBaslik).text = updatedTitle
+                            findViewById<TextView>(R.id.tvDetayAciklama).text = updatedDesc
+                            Toast.makeText(this, "Bildirim güncellendi", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this, "Alanlar boş bırakılamaz!", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
+                .setNegativeButton("İptal", null)
+                .show()
         }
     }
 }
