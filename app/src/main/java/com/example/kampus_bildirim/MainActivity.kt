@@ -179,7 +179,31 @@ class MainActivity : AppCompatActivity() {
                     android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
                 }
             }
+        listenFollowedNotifications()
 
+    }
+
+    private fun listenFollowedNotifications() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Kullanıcının takip ettiği bildirimleri dinle
+        db.collection("notifications")
+            .whereArrayContains("followers", uid)
+            .addSnapshotListener { value, error ->
+                if (error != null) return@addSnapshotListener
+
+                value?.documentChanges?.forEach { dc ->
+                    // Sadece veri güncellendiğinde çalışacak
+                    if (dc.type == com.google.firebase.firestore.DocumentChange.Type.MODIFIED) {
+                        val notif = dc.document.toObject(Notification::class.java)
+                        val title = notif.title
+                        val status = notif.status
+
+                        // Kullanıcıya bilgi ver
+                        Toast.makeText(this, "Takip ettiğiniz '$title' bildirimi şu an: $status", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
     }
 
     override fun onResume() {
