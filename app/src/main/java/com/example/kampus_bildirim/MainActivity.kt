@@ -103,10 +103,8 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filtered)
         }
         //  Admin Yetki Alanı
-        // --- ADMİN YETKİ ALANI (BİRİM FİLTRELEME) ---
         findViewById<Button>(R.id.btnAdminOnly).setOnClickListener {
             if (adminUnit != null) {
-                // Listedeki bildirimlerden sadece birimi adminUnit ile aynı olanları filtrele
                 val filtered = notificationList.filter { it.unit == adminUnit }
 
                 if (filtered.isEmpty()) {
@@ -120,9 +118,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // --- ACİL DURUM BİLDİRİMİ (DÜZELTİLMİŞ) ---
+        //ACİL DURUM BİLDİRİMİ
         val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-
         db.collection("emergency_announcements")
             .addSnapshotListener { value, error ->
                 if (error != null) {
@@ -130,45 +127,38 @@ class MainActivity : AppCompatActivity() {
                     return@addSnapshotListener
                 }
 
+                // uyarıyı göster
                 if (value != null && !value.isEmpty) {
                     val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
                     val doc = docs[0]
-                    val docId = doc.id
-                    val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+                    val message = doc.getString("message") ?: "Acil Durum Duyurusu"
 
-                    android.util.Log.d("AcilDurum", "En son döküman ID: $docId, Görülen ID: $lastSeenId")
-
-                    // if (true) kısmını docId != lastSeenId olarak düzelttik
-                    if (docId != lastSeenId) {
-                        val message = doc.getString("message") ?: "Mesaj bulunamadı"
-                        runOnUiThread {
-                            androidx.appcompat.app.AlertDialog.Builder(this@MainActivity) // this@MainActivity daha güvenlidir
-                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
-                                .setMessage(message)
-                                .setCancelable(false)
-                                .setPositiveButton("Anladım") { dialog, _ ->
-                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
-                                    dialog.dismiss()
-                                }
-                                .show()
-                        }
+                    // ıd kontorlü yok
+                    runOnUiThread {
+                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                            .setTitle("⚠️ ACİL DURUM DUYURUSU")
+                            .setMessage(message)
+                            .setCancelable(false)
+                            .setPositiveButton("Kapat") { dialog, _ ->
+                                dialog.dismiss()
+                            }
+                            .show()
                     }
-                } else {
-                    android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
                 }
             }
+
 
         // xmldeki butonu koda bağla
         val btnAdminPanel = findViewById<Button>(R.id.btnAdminPanel)
 
-        //  Mevcut kullanıcının rolünü Firestore'dan çek
+        //  kulllanıcın rolünü veritabanından çek
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
         if (currentUserId != null) {
             db.collection("users").document(currentUserId).get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         val role = document.getString("role")?.trim()
-                        // Adminin birim bilgisini hafızaya al
+                        // admin birimi al
                         adminUnit = document.getString("unit")?.trim()
 
                         if (role.equals("Admin", ignoreCase = true)) {
@@ -190,11 +180,11 @@ class MainActivity : AppCompatActivity() {
                     btnAdminPanel.visibility = android.view.View.GONE
                 }
         }
-    } // onCreate sonu
+    }
 
     override fun onResume() {
         super.onResume()
-        fetchNotifications() // Ana sayfaya her geri gelindiğinde bildirim tercihlerini kontrol eder
+        fetchNotifications() 
     }
 
     private fun filterList(query: String) {
