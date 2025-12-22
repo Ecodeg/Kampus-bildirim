@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationList: ArrayList<Notification>
     private lateinit var db: FirebaseFirestore
 
+    private var adminUnit: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -101,12 +103,61 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filtered)
         }
         //  Admin Yetki Alanı
+        // --- ADMİN YETKİ ALANI (BİRİM FİLTRELEME) ---
         findViewById<Button>(R.id.btnAdminOnly).setOnClickListener {
-            // tam yetki
-            val filtered = notificationList.filter { it.status != "Çözüldü" }
-            adapter.updateList(filtered)
-            Toast.makeText(this, "Tüm kategorilerdeki aktif bildirimler (Admin Yetkisi)", Toast.LENGTH_SHORT).show()
+            if (adminUnit != null) {
+                // Listedeki bildirimlerden sadece birimi adminUnit ile aynı olanları filtrele
+                val filtered = notificationList.filter { it.unit == adminUnit }
+
+                if (filtered.isEmpty()) {
+                    Toast.makeText(this, "$adminUnit birimi için henüz bildirim yok.", Toast.LENGTH_SHORT).show()
+                }
+
+                adapter.updateList(filtered)
+                Toast.makeText(this, "Kendi biriminiz filtrelendi: $adminUnit", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Birim bilgileriniz yüklenemedi.", Toast.LENGTH_SHORT).show()
+            }
         }
+
+        // --- ACİL DURUM BİLDİRİMİ (DÜZELTİLMİŞ) ---
+        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+
+        db.collection("emergency_announcements")
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    android.util.Log.e("AcilDurum", "Firestore Hatası: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (value != null && !value.isEmpty) {
+                    val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
+                    val doc = docs[0]
+                    val docId = doc.id
+                    val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+
+                    android.util.Log.d("AcilDurum", "En son döküman ID: $docId, Görülen ID: $lastSeenId")
+
+                    // if (true) kısmını docId != lastSeenId olarak düzelttik
+                    if (docId != lastSeenId) {
+                        val message = doc.getString("message") ?: "Mesaj bulunamadı"
+                        runOnUiThread {
+                            androidx.appcompat.app.AlertDialog.Builder(this@MainActivity) // this@MainActivity daha güvenlidir
+                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
+                                .setMessage(message)
+                                .setCancelable(false)
+                                .setPositiveButton("Anladım") { dialog, _ ->
+                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
+                                    dialog.dismiss()
+                                }
+                                .show()
+                        }
+                    }
+                } else {
+                    android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
+                }
+            }
+
         // xmldeki butonu koda bağla
         val btnAdminPanel = findViewById<Button>(R.id.btnAdminPanel)
 
@@ -116,9 +167,9 @@ class MainActivity : AppCompatActivity() {
             db.collection("users").document(currentUserId).get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
-                        // Veriyi al ve boşlukları temizle
                         val role = document.getString("role")?.trim()
-                        android.util.Log.d("RolKontrol", "Gelen Temiz Rol: '$role'")
+                        // Adminin birim bilgisini hafızaya al
+                        adminUnit = document.getString("unit")?.trim()
 
                         if (role.equals("Admin", ignoreCase = true)) {
                             android.util.Log.d("RolKontrol", "BAŞARILI: Admin rolü onaylandı.")
@@ -138,49 +189,8 @@ class MainActivity : AppCompatActivity() {
                     android.util.Log.e("RolKontrol", "Hata: ${e.message}")
                     btnAdminPanel.visibility = android.view.View.GONE
                 }
-                .addOnFailureListener {
-                    // Hata durumunda buton gizli
-                    btnAdminPanel.visibility = android.view.View.GONE
-                }
         }
-        // acil durum bildirim
-        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-
-        db.collection("emergency_announcements")
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    android.util.Log.e("AcilDurum", "Firestore Hatası: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                if (value != null && !value.isEmpty) {
-                    val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
-                    val doc = docs[0]
-                    val docId = doc.id
-                    val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
-
-                    android.util.Log.d("AcilDurum", "En son döküman ID: $docId, Görülen ID: $lastSeenId")
-
-                    if (true) { // lastend yazılabilir
-                        val message = doc.getString("message") ?: "Mesaj bulunamadı"
-                        runOnUiThread {
-                            androidx.appcompat.app.AlertDialog.Builder(this)
-                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
-                                .setMessage(message)
-                                .setCancelable(false)
-                                .setPositiveButton("Anladım") { dialog, _ ->
-                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
-                                    dialog.dismiss()
-                                }
-                                .show()
-                        }
-                    }
-                } else {
-                    android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
-                }
-            }
-
-    }
+    } // onCreate sonu
 
     override fun onResume() {
         super.onResume()
@@ -206,6 +216,7 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filteredList)
         }
     }
+
     private fun fetchNotifications() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -248,4 +259,5 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
         }
-    }}
+    }
+}
