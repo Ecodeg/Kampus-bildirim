@@ -75,6 +75,24 @@
         android:backgroundTint="#FF9800"
         android:text="Durumu Güncelle (Admin)" />
 
+    <Button
+        android:id="@+id/btnEditNotification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        android:backgroundTint="#2196F3"
+        android:text="Bildirimi Düzenle (Admin)" />
+
+    <Button
+        android:id="@+id/btnDeleteNotification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        android:backgroundTint="#F44336"
+        android:text="Uygunsuz Bildirimi Sonlandır (Admin)" />
+
     <fragment
         android:id="@+id/mini_map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
