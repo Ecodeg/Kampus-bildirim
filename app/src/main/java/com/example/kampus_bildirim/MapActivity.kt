@@ -55,14 +55,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun fetchNotificationsForMap() {
         db.collection("notifications").addSnapshotListener { value, _ ->
-            mMap.clear()
+            mMap.clear() // Haritayı temizle (güncel veriler için)
             value?.documents?.forEach { doc ->
                 val notif = doc.toObject(Notification::class.java)
-                notif?.let {
-                    val pos = LatLng(it.latitude, it.longitude)
 
-                    // Bildirimlere göre renk belirleme
-                    val markerColor = when (it.type) {
+                // Haritada sadece aktif sorunlar gözüksün (Çözüldü olanlar gözükmeyecek)
+                if (notif != null && notif.status != "Çözüldü") {
+
+                    // Firestore'dan ID'leri kopyalıyoruz böylelikle haritadan detay aç sayfasına geçtiğimizde takip et butonumuz düzgün bir şekilde çalışabilecek
+                    val fullNotif = notif.copy(id = doc.id)
+
+                    val pos = LatLng(fullNotif.latitude, fullNotif.longitude)
+
+                    // Bildirim türüne göre renk belirleme
+                    val markerColor = when (fullNotif.type) {
                         "Sağlık" -> BitmapDescriptorFactory.HUE_RED        // Kırmızı
                         "Güvenlik" -> BitmapDescriptorFactory.HUE_BLUE     // Mavi
                         "Teknik" -> BitmapDescriptorFactory.HUE_ORANGE     // Turuncu
@@ -70,12 +76,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         else -> BitmapDescriptorFactory.HUE_CYAN           // Diğerleri Turkuaz
                     }
 
-                    val marker = mMap.addMarker(MarkerOptions()
-                        .position(pos)
-                        .title(it.title)
-                        .icon(BitmapDescriptorFactory.defaultMarker(markerColor)))
-
-                    marker?.tag = it // Notification'ı bağla (Detay için lazım)
+                    // İşaretçiyi (Marker) oluştur
+                    val marker = mMap.addMarker(
+                        MarkerOptions()
+                            .position(pos)
+                            .title(fullNotif.title)
+                            .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
+                    )
+                    marker?.tag = fullNotif
                 }
             }
         }
