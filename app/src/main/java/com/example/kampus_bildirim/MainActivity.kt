@@ -118,34 +118,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        //ACİL DURUM BİLDİRİMİ
-        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-        db.collection("emergency_announcements")
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    android.util.Log.e("AcilDurum", "Firestore Hatası: ${error.message}")
-                    return@addSnapshotListener
-                }
 
-                // uyarıyı göster
-                if (value != null && !value.isEmpty) {
-                    val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
-                    val doc = docs[0]
-                    val message = doc.getString("message") ?: "Acil Durum Duyurusu"
-
-                    // ıd kontorlü yok
-                    runOnUiThread {
-                        androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                            .setTitle("⚠️ ACİL DURUM DUYURUSU")
-                            .setMessage(message)
-                            .setCancelable(false)
-                            .setPositiveButton("Kapat") { dialog, _ ->
-                                dialog.dismiss()
-                            }
-                            .show()
-                    }
-                }
-            }
 
 
         // xmldeki butonu koda bağla
@@ -157,6 +130,7 @@ class MainActivity : AppCompatActivity() {
             db.collection("users").document(currentUserId).get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
+                        // Veriyi al ve boşlukları temizle
                         val role = document.getString("role")?.trim()
                         // admin birimi al
                         adminUnit = document.getString("unit")?.trim()
@@ -179,12 +153,78 @@ class MainActivity : AppCompatActivity() {
                     android.util.Log.e("RolKontrol", "Hata: ${e.message}")
                     btnAdminPanel.visibility = android.view.View.GONE
                 }
+                .addOnFailureListener {
+                    // Hata durumunda buton gizli
+                    btnAdminPanel.visibility = android.view.View.GONE
+                }
         }
+        // acil durum bildirim
+        val sharedPrefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+
+        db.collection("emergency_announcements")
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    android.util.Log.e("AcilDurum", "Firestore Hatası: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                if (value != null && !value.isEmpty) {
+                    val docs = value.documents.sortedByDescending { it.getTimestamp("timestamp") }
+                    val doc = docs[0]
+                    val docId = doc.id
+                    val lastSeenId = sharedPrefs.getString("last_emergency_id", "")
+
+                    android.util.Log.d("AcilDurum", "En son döküman ID: $docId, Görülen ID: $lastSeenId")
+
+                    if (true) { // lastend yazılabilir
+                        val message = doc.getString("message") ?: "Mesaj bulunamadı"
+                        runOnUiThread {
+                            androidx.appcompat.app.AlertDialog.Builder(this)
+                                .setTitle("⚠️ ACİL DURUM DUYURUSU")
+                                .setMessage(message)
+                                .setCancelable(false)
+                                .setPositiveButton("Anladım") { dialog, _ ->
+                                    sharedPrefs.edit().putString("last_emergency_id", docId).apply()
+                                    dialog.dismiss()
+                                }
+                                .show()
+                        }
+                    }
+                } else {
+                    android.util.Log.d("AcilDurum", "Koleksiyon boş veya veri gelmedi.")
+                }
+            }
+        listenFollowedNotifications()
+
+    }
+
+    // User takip ettiği bir bildirimin durumu değiştiğinde bildirim alır
+    private fun listenFollowedNotifications() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        // Kullanıcının takip ettiği bildirimleri dinle
+        db.collection("notifications")
+            .whereArrayContains("followers", uid)
+            .addSnapshotListener { value, error ->
+                if (error != null) return@addSnapshotListener
+
+                value?.documentChanges?.forEach { dc ->
+                    // Sadece veri güncellendiğinde çalışacak
+                    if (dc.type == com.google.firebase.firestore.DocumentChange.Type.MODIFIED) {
+                        val notif = dc.document.toObject(Notification::class.java)
+                        val title = notif.title
+                        val status = notif.status
+
+                        // Kullanıcıya bilgi ver
+                        Toast.makeText(this, "Takip ettiğiniz '$title' bildirimi şu an: $status", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
     }
 
     override fun onResume() {
         super.onResume()
-        fetchNotifications() 
+        fetchNotifications() // Ana sayfaya her geri gelindiğinde bildirim tercihlerini kontrol eder
     }
 
     private fun filterList(query: String) {
@@ -206,7 +246,6 @@ class MainActivity : AppCompatActivity() {
             adapter.updateList(filteredList)
         }
     }
-
     private fun fetchNotifications() {
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 

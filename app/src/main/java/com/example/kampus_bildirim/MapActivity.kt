@@ -55,14 +55,20 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun fetchNotificationsForMap() {
         db.collection("notifications").addSnapshotListener { value, _ ->
-            mMap.clear()
+            mMap.clear() // Haritayı temizle (güncel veriler için)
             value?.documents?.forEach { doc ->
                 val notif = doc.toObject(Notification::class.java)
-                notif?.let {
-                    val pos = LatLng(it.latitude, it.longitude)
 
-                    // Bildirimlere göre renk belirleme
-                    val markerColor = when (it.type) {
+                // Haritada sadece aktif sorunlar gözüksün (Çözüldü olanlar gözükmeyecek)
+                if (notif != null && notif.status != "Çözüldü") {
+
+                    // Firestore'dan ID'leri kopyalıyoruz böylelikle haritadan detay aç sayfasına geçtiğimizde takip et butonumuz düzgün bir şekilde çalışabilecek
+                    val fullNotif = notif.copy(id = doc.id)
+
+                    val pos = LatLng(fullNotif.latitude, fullNotif.longitude)
+
+                    // Bildirim türüne göre renk belirleme
+                    val markerColor = when (fullNotif.type) {
                         "Sağlık" -> BitmapDescriptorFactory.HUE_RED        // Kırmızı
                         "Güvenlik" -> BitmapDescriptorFactory.HUE_BLUE     // Mavi
                         "Teknik" -> BitmapDescriptorFactory.HUE_ORANGE     // Turuncu
@@ -70,12 +76,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                         else -> BitmapDescriptorFactory.HUE_CYAN           // Diğerleri Turkuaz
                     }
 
-                    val marker = mMap.addMarker(MarkerOptions()
-                        .position(pos)
-                        .title(it.title)
-                        .icon(BitmapDescriptorFactory.defaultMarker(markerColor)))
-
-                    marker?.tag = it // Notification'ı bağla (Detay için lazım)
+                    // İşaretçiyi (Marker) oluştur
+                    val marker = mMap.addMarker(
+                        MarkerOptions()
+                            .position(pos)
+                            .title(fullNotif.title)
+                            .icon(BitmapDescriptorFactory.defaultMarker(markerColor))
+                    )
+                    marker?.tag = fullNotif
                 }
             }
         }
@@ -87,7 +95,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val tvTime = findViewById<TextView>(R.id.tvMapTime)
         val btnGoDetail = findViewById<Button>(R.id.btnGoDetail)
 
-        // Bilgileri karta yazıyoruz
         tvTitle.text = notif.title
         tvType.text = "Tür: ${notif.type}"
 
@@ -95,9 +102,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val timeAgo = try {
             notif.creationTime?.let {
                 val diff = System.currentTimeMillis() - it.toDate().time
-                val minutes = java.util.concurrent.TimeUnit.MILLISECONDS.toMinutes(diff)
-                val hours = java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff)
-
+                val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
+                val hours = TimeUnit.MILLISECONDS.toHours(diff)
                 when {
                     minutes < 1 -> "Şimdi"
                     minutes < 60 -> "$minutes dk önce"
@@ -105,25 +111,24 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     else -> "${hours / 24} gün önce"
                 }
             } ?: "Zaman bilgisi yok"
-        } catch (e: Exception) {
-            "Zaman hesaplanamadı"
-        }
+        } catch (e: Exception) { "Zaman hesaplanamadı" }
 
         tvTime.text = timeAgo
-
-
         infoCard.visibility = View.VISIBLE
 
-        // Detay gör
         btnGoDetail.setOnClickListener {
             val intent = Intent(this, NotificationDetailActivity::class.java)
-            // Tüm bilgileri (ID dahil) detay sayfasına gönderiyoruz
+
+            // Verileri intent'e ekliyoruz
             intent.putExtra("notif_id", notif.id)
             intent.putExtra("notif_title", notif.title)
             intent.putExtra("notif_desc", notif.description)
             intent.putExtra("notif_type", notif.type)
             intent.putExtra("notif_status", notif.status)
-            intent.putExtra("notif_time", timeAgo)
+            intent.putExtra("notif_photoUrl", notif.photoUrl) // Resim verisi aktarılıyor
+            intent.putExtra("notif_lat", notif.latitude)
+            intent.putExtra("notif_lng", notif.longitude)
+
             startActivity(intent)
         }
     }
